@@ -1,0 +1,362 @@
+4.1
+
+SELECT   a.airport_code as code,
+         a.airport_name,
+         a.city
+FROM     dst_project.airports a
+WHERE    a.city IN (
+            SELECT   aa.city
+            FROM     dst_project.airports aa
+            GROUP BY aa.city
+            HAVING   COUNT(*) > 1
+         )
+ORDER BY a.city, a.airport_code;
+
+Ответ: Moscow, Ulyanovsk 
+
+4.2
+1.
+
+select
+    count(distinct f.status)
+from
+    dst_project.flights as f
+
+Ответ: 6
+2.
+
+select
+    count(f.status)
+from
+    dst_project.flights as f
+where f.status = 'Departed'
+group by
+    f.status
+
+Ответ: 58
+
+3.
+
+SELECT   count(*) as num
+FROM     dst_project.seats s
+where s.aircraft_code = '773'
+GROUP BY s.aircraft_code
+ORDER BY s.aircraft_code
+
+Ответ: 402
+
+4.
+
+SELECT   status,
+         count(*) as count
+FROM     dst_project.flights f
+where f.status = 'Arrived' and f.actual_arrival between '2017-04-01' and '2017-09-01' 
+GROUP BY status 
+
+Ответ: 74227
+
+4.3
+1.
+
+SELECT   status,
+         count(*) as count
+FROM     dst_project.flights f
+where f.status = 'Cancelled'
+GROUP BY status 
+
+Ответ: 437
+
+2.
+
+SELECT  
+    count(*)
+FROM     dst_project.aircrafts a
+WHERE a.model LIKE 'Boeing%'
+Ответ: 3
+
+SELECT  
+    count(*)
+FROM     dst_project.aircrafts a
+WHERE a.model LIKE 'Sukhoi Superjet%'
+Ответ: 1
+
+SELECT  
+    count(*)
+FROM     dst_project.aircrafts a
+WHERE a.model LIKE 'Airbus%'
+Ответ: 3
+
+3.
+
+with airports_count as
+  ( SELECT 'Australia' as part_of_world,
+           count (ap.airport_code) as count_airport
+    FROM dst_project.airports as ap
+    where ap.timezone like 'Australia/%'
+    union all
+    SELECT 'Asia' as part_of_world,
+           count (ap.airport_code) as count_airport
+    FROM dst_project.airports as ap
+    where ap.timezone like 'Asia/%'
+    union all
+    SELECT 'America' as part_of_world,
+           count (ap.airport_code) as count_airport
+    FROM dst_project.airports as ap
+    where ap.timezone like 'America/%'
+    union all
+    SELECT 'Antarctica' as part_of_world,
+           count (ap.airport_code) as count_airport
+    FROM dst_project.airports as ap
+    where ap.timezone like 'Antarctica/%'
+    union all
+    SELECT 'Africa' as part_of_world,
+           count (ap.airport_code) as count_airport
+    FROM dst_project.airports as ap
+    where ap.timezone like 'Africa/%'
+    union all
+    SELECT 'Europe' as part_of_world,
+           count (ap.airport_code) as count_airport
+    FROM dst_project.airports as ap
+    where ap.timezone like 'Europe/%'
+    )
+select
+    ac.part_of_world,
+    ac.count_airport
+from airports_count ac
+
+Ответ: 'Europe, Asia'
+
+4.
+
+select
+    f.flight_id
+from dst_project.flights f
+where f.actual_departure is not null and f.scheduled_departure is not null
+order by (actual_departure - scheduled_departure) desc
+limit 1
+
+Ответ: 157571
+
+4.4
+1.
+
+SELECT   scheduled_departure
+FROM     dst_project.flights
+order by
+    scheduled_departure
+limit 1
+
+Ответ: 14.08.2016
+
+2.
+
+SELECT   
+    date_part('minute',scheduled_arrival-  scheduled_departure) + 60*date_part('hour',scheduled_arrival-  scheduled_departure) 
+FROM
+    dst_project.flights
+where scheduled_arrival is not null and scheduled_departure is not null
+order by
+   scheduled_arrival-  scheduled_departure desc
+limit 1
+
+Ответ: 530
+
+3.
+
+SELECT   
+    date_part('minute',scheduled_arrival-  scheduled_departure) + 60*date_part('hour',scheduled_arrival-  scheduled_departure),
+    arrival_airport,
+    departure_airport
+FROM
+    dst_project.flights
+where scheduled_arrival is not null and scheduled_departure is not null
+order by
+   scheduled_arrival-  scheduled_departure desc
+limit 1
+
+Ответ:DME - UUS
+
+4.
+SELECT   
+    avg(date_part('minute',actual_arrival - actual_departure) + 60*date_part('hour',actual_arrival-  actual_departure))
+FROM
+    dst_project.flights
+where actual_arrival is not null and actual_departure is not null
+
+Ответ: 128
+
+4.5
+1.
+
+SELECT   
+    fare_conditions
+FROM     dst_project.aircrafts a
+    join dst_project.seats as s on a.aircraft_code = s.aircraft_code
+where a.aircraft_code='SU9'
+group by
+    s.fare_conditions
+order by 
+    count(s.seat_no) desc
+limit 1
+
+Ответ: Economy
+
+2.
+
+select
+    min(total_amount)
+from dst_project.bookings b
+
+Ответ:3400
+
+3.
+select
+    b.seat_no
+from dst_project.tickets t
+    join dst_project.ticket_flights tf on tf.ticket_no = t.ticket_no
+    join dst_project.boarding_passes b on b.ticket_no = t.ticket_no
+where 
+    t.passenger_id = '4313 788533'
+Ответ: 2A
+
+5.1
+1.
+SELECT   
+    count(distinct flight_id)
+FROM
+    dst_project.flights
+where arrival_airport = 'AAQ' and date_part('year', actual_arrival) =  2017
+
+Ответ: 486
+
+2.
+SELECT   
+    count(distinct flight_id)
+FROM
+    dst_project.flights as f
+where arrival_airport = 'AAQ' and date_part('year', actual_arrival) =  2017 and date_part('month', actual_arrival) in (1,2,12)
+
+Ответ: 127
+
+3.
+
+SELECT   
+    count(distinct flight_id)
+FROM
+    dst_project.flights as f
+where arrival_airport = 'AAQ' and status = 'Cancelled'
+
+Ответ: 1
+
+4.
+
+SELECT   
+    count(flight_id)
+FROM
+    dst_project.flights as f
+    join dst_project.airports as a on f.arrival_airport = a.airport_code
+where departure_airport = 'AAQ' and a.city not in('Moscow')
+
+Ответ: 453
+
+5.
+
+with seats_c as(
+SELECT   
+    s.aircraft_code,
+    count(*) as count_seats
+FROM     dst_project.seats s
+GROUP BY s.aircraft_code
+ORDER BY s.aircraft_code
+
+)
+SELECT   
+    a.model
+FROM
+    dst_project.flights as f
+    join dst_project.aircrafts a on a.aircraft_code = f.aircraft_code
+    join seats_c s_c on s_c.aircraft_code =  f.aircraft_code
+where departure_airport = 'AAQ'
+order by
+    s_c.count_seats desc
+limit 1
+
+Ответ: Boeing 737-300
+
+
+
+
+Главный запрос:
+
+--Стоимость включенных в полёт билетов
+with amounts as(
+select
+    flight_id,
+    sum(amount) amount_sum,
+    count(case when tf.fare_conditions = 'Business' then tf.flight_id end) Business_count,
+    count(case when tf.fare_conditions = 'Economy' then tf.flight_id end) Economy_count
+from dst_project.ticket_flights tf
+group by flight_id
+),
+--Расход топлива в минуту для различных самолётов
+rate as
+(
+SELECT 
+    1700.0/60 as rate_minute,
+    'SU9' as aircraft_code
+    union
+SELECT 
+    2400.0/60 as rate_minute,
+    '733' as aircraft_code
+),
+--Стоимость килограмма топлива в разные месяцы
+fuel_cost as
+(
+--январь
+SELECT   
+    flight_id,
+    41435.0/1000 as cost
+FROM
+    dst_project.flights as f
+where f.departure_airport = 'AAQ' and (date_trunc('month', f.scheduled_departure) in ('2017-01-01')) and f.status not in ('Cancelled')
+union all
+--февраль
+SELECT   
+    flight_id,
+    39553.0/1000 as cost
+FROM
+    dst_project.flights as f
+where f.departure_airport = 'AAQ' and (date_trunc('month', f.scheduled_departure) in ('2017-02-01')) and f.status not in ('Cancelled')
+union all
+--декабрь 2016
+SELECT   
+    flight_id,
+    38867.0/1000 as cost
+FROM
+    dst_project.flights as f
+where f.departure_airport = 'AAQ' and (date_trunc('month', f.scheduled_departure) in ('2016-12-01')) and f.status not in ('Cancelled')
+),
+--Число минут в полёте
+air_minutes as(
+select 
+    date_part('minute',actual_arrival - actual_departure) + 60*date_part('hour',actual_arrival-  actual_departure) minutes_count,
+    f.flight_id
+from
+    dst_project.flights as f
+where departure_airport = 'AAQ'
+  AND (date_trunc('month', scheduled_departure) in ('2017-01-01','2017-02-01', '2016-12-01'))
+  AND status not in ('Cancelled')
+)
+
+SELECT
+    *
+FROM dst_project.flights f
+    JOIN amounts a on f.flight_id = a.flight_id
+    JOIN fuel_cost fc on fc.flight_id = f.flight_id
+    JOIN rate as r on r.aircraft_code = f.aircraft_code
+    JOIN air_minutes am on am.flight_id = f.flight_id
+WHERE departure_airport = 'AAQ'
+  AND (date_trunc('month', scheduled_departure) in ('2017-01-01','2017-02-01', '2016-12-01'))
+  AND status not in ('Cancelled')
+order by amount_sum asc
+
